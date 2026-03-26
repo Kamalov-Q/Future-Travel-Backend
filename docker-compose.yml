@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: future_travel
+    restart: always
+    environment:
+      POSTGRES_USER: kamal
+      POSTGRES_PASSWORD: kamalov1029
+      POSTGRES_DB: future_travel
+    ports:
+      - "8080:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - future_travel_network
+
+  redis:
+    image: redis:7
+    container_name: future_travel_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - future_travel_network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  future_travel_network:
+    driver: bridge

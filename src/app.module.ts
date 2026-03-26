@@ -40,7 +40,7 @@ import { Comment } from './comment/entities/comment.entity';
         password: configService.get<string>('DB_PASSWORD', 'postgres'),
         database: configService.get<string>('DB_NAME', 'future_travel'),
         entities: [Admin, Tour, Comment],
-        synchronize: true, // set to false in production, use migrations
+        synchronize: true,
         logging: false,
       }),
     }),

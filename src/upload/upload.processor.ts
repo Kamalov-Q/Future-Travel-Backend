@@ -26,22 +26,49 @@ export class UploadProcessor extends WorkerHost {
     const storageZone = this.configService.get<string>('BUNNY_STORAGE_ZONE_NAME');
     const apiKey = this.configService.get<string>('BUNNY_STORAGE_API_KEY');
     const cdnHostname = this.configService.get<string>('BUNNY_CDN_HOSTNAME');
-    const storageRegion = this.configService.get<string>(
-      'BUNNY_STORAGE_REGION',
-      'storage.bunnycdn.com',
-    );
+    // Backward-compatible: historically this env was treated like a hostname.
+    // Prefer BUNNY_STORAGE_HOST (full hostname) when present.
+    const storageHostOrRegion =
+      this.configService.get<string>('BUNNY_STORAGE_HOST') ??
+      this.configService.get<string>('BUNNY_STORAGE_REGION', 'storage.bunnycdn.com');
+
+    if (!storageZone || !apiKey || !cdnHostname) {
+      const missing: string[] = [];
+      if (!storageZone) missing.push('BUNNY_STORAGE_ZONE_NAME');
+      if (!apiKey) missing.push('BUNNY_STORAGE_API_KEY');
+      if (!cdnHostname) missing.push('BUNNY_CDN_HOSTNAME');
+      throw new Error(`Missing Bunny config: ${missing.join(', ')}`);
+    }
+
+    const storageHost = storageHostOrRegion.includes('.')
+      ? storageHostOrRegion
+      : `${storageHostOrRegion}.storage.bunnycdn.com`;
 
     const buffer = Buffer.from(fileBase64, 'base64');
-    const uploadUrl = `https://${storageRegion}/${storageZone}/${filename}`;
+    const uploadUrl = `https://${storageHost}/${storageZone}/${filename}`;
 
-    await axios.put(uploadUrl, buffer, {
-      headers: {
-        AccessKey: apiKey,
-        'Content-Type': mimetype || 'application/octet-stream',
-        'Content-Length': buffer.length,
-      },
-      maxBodyLength: Infinity,
-    });
+    try {
+      await axios.put(uploadUrl, buffer, {
+        headers: {
+          AccessKey: apiKey,
+          'Content-Type': mimetype || 'application/octet-stream',
+          'Content-Length': buffer.length,
+        },
+        maxBodyLength: Infinity,
+      });
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        const responseData = err.response?.data;
+        this.logger.error(
+          `Bunny upload failed (status=${status}) zone=${storageZone} host=${storageHost} path=${filename}`,
+        );
+        if (responseData) {
+          this.logger.error(`Bunny response: ${JSON.stringify(responseData)}`);
+        }
+      }
+      throw err;
+    }
 
     const cdnUrl = `https://${cdnHostname}/${filename}`;
     this.logger.log(`Upload complete: ${cdnUrl}`);
