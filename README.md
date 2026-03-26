@@ -1,3 +1,82 @@
+# Future Travel Backend
+
+Backend for the "Future Travel" travel/booking admin flow.
+
+## What it includes
+- JWT authentication for admin endpoints
+- Tours (public read, admin CRUD)
+- Comments (public submit, admin approve/reject)
+- Image upload to Bunny.net via BullMQ worker
+
+## Setup
+```bash
+npm install
+```
+
+Create/adjust `.env` with (example):
+```bash
+PORT=3000
+
+# PostgreSQL
+DB_HOST=localhost
+DB_PORT=8080
+DB_USERNAME=kamal
+DB_PASSWORD=kamalov1029
+DB_NAME=future_travel
+
+# JWT
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRES_IN=7d
+
+# Admin (auto-seeded on startup if not present)
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=your_password
+ADMIN_NAME=Super Admin
+
+# Bunny.net CDN
+BUNNY_STORAGE_ZONE_NAME=future-travel
+BUNNY_STORAGE_API_KEY=your_bunny_storage_api_key
+BUNNY_CDN_HOSTNAME=future-travel.b-cdn.net
+BUNNY_STORAGE_REGION=storage.bunnycdn.com
+# Optional alternative:
+# BUNNY_STORAGE_HOST=storage.bunnycdn.com
+
+# Redis (BullMQ)
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# Swagger docs basic auth
+SWAGGER_USERNAME=FutureTravelPass
+SWAGGER_PASSWORD=change_me
+```
+
+Optional (local deps):
+```bash
+docker compose up -d
+```
+
+## Run
+```bash
+npm run dev
+```
+
+API base URL: `http://localhost:<PORT>/api`
+
+## Swagger
+Protected by HTTP Basic Auth:
+- `GET /api/docs`
+
+## Key endpoints
+- `POST /api/auth/login`
+- `GET /api/tours`, `GET /api/tours/:id`
+- Admin: `POST /api/tours/admin`, `PUT /api/tours/admin/:id`, `DELETE /api/tours/admin/:id`
+- Comments: `POST /api/comments` (public), admin approve/reject endpoints under `/api/comments/admin/...`
+- Upload: `POST /api/upload/image` (JWT required, `multipart/form-data` field `file`)
+
+## Bunny CDN troubleshooting
+If the upload returns a CDN URL but fetching it returns `401 Unauthorized`, your Bunny Pull Zone is likely protected (edge/origin pull not allowed publicly).
+
+<!--
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
@@ -96,3 +175,4 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+-->
