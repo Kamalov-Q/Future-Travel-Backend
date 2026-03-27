@@ -9,7 +9,12 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Security headers
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
 
   // CORS
   app.enableCors({
@@ -30,7 +35,6 @@ async function bootstrap() {
   // API prefix
   app.setGlobalPrefix('api');
 
-  // ─── Swagger basic auth protection ──────────────────────────────────────────
   const swaggerUsername = process.env.SWAGGER_USERNAME || 'FutureTravelPass';
   const swaggerPassword = process.env.SWAGGER_PASSWORD || 'Msaa2006!';
 
@@ -43,7 +47,6 @@ async function bootstrap() {
     }),
   );
 
-  // ─── Swagger setup ───────────────────────────────────────────────────────────
   const config = new DocumentBuilder()
     .setTitle('🌍 Future Travel API')
     .setDescription(
