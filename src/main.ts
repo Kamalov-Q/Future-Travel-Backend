@@ -1,14 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import basicAuth from 'express-basic-auth';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Security headers
   app.use(
     helmet({
       contentSecurityPolicy: false,
@@ -16,14 +14,12 @@ async function bootstrap() {
     }),
   );
 
-  // CORS
   app.enableCors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
-  // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -32,20 +28,7 @@ async function bootstrap() {
     }),
   );
 
-  // API prefix
   app.setGlobalPrefix('api');
-
-  const swaggerUsername = process.env.SWAGGER_USERNAME || 'FutureTravelPass';
-  const swaggerPassword = process.env.SWAGGER_PASSWORD || 'Msaa2006!';
-
-  app.use(
-    ['/api/docs', '/api/docs-json', '/api/docs-yaml'],
-    basicAuth({
-      challenge: true,
-      realm: 'Future Travel API Docs',
-      users: { [swaggerUsername]: swaggerPassword },
-    }),
-  );
 
   const config = new DocumentBuilder()
     .setTitle('🌍 Future Travel API')
@@ -92,6 +75,7 @@ Admin endpointlari uchun **JWT Bearer token** talab qilinadi:
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
+
   SwaggerModule.setup('api/docs', app, document, {
     swaggerOptions: {
       persistAuthorization: true,
@@ -110,10 +94,9 @@ Admin endpointlari uchun **JWT Bearer token** talab qilinadi:
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
+
   console.log(`\n🚀 Application is running on: http://localhost:${port}/api`);
-  console.log(`📚 Swagger docs: http://localhost:${port}/api/docs`);
-  console.log(`   Username: ${swaggerUsername}`);
-  console.log(`   Password: ${swaggerPassword}\n`);
+  console.log(`📚 Swagger docs: http://localhost:${port}/api/docs\n`);
 }
 
 void bootstrap();
