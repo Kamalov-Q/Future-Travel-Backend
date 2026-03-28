@@ -92,9 +92,6 @@ export class AuthService {
       name: admin.name,
     };
 
-    const accessPayload = { ...payload, tokenUse: 'access' as const };
-    const refreshPayload = { ...payload, tokenUse: 'refresh' as const };
-
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
         secret: process.env.JWT_SECRET,
