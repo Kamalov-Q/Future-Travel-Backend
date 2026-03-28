@@ -3,10 +3,11 @@ import {
   IsString,
   IsNumber,
   IsOptional,
-  IsBoolean,
-  IsUrl,
   Min,
   MaxLength,
+  IsArray,
+  ArrayMaxSize,
+  Max,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -20,16 +21,6 @@ export class CreateTourDto {
   @IsString()
   @MaxLength(200)
   destinationUz: string;
-
-  @ApiProperty({
-    example: "Turkiya",
-    description:
-      "Mintaqa/mamlakat nomi (O'zbekcha) — masalan: Turkiya, Misr, Osiyo, BAA, Hind okeani",
-    maxLength: 200,
-  })
-  @IsString()
-  @MaxLength(200)
-  regionUz: string;
 
   @ApiPropertyOptional({
     example:
@@ -50,16 +41,6 @@ export class CreateTourDto {
   @MaxLength(200)
   destinationRu: string;
 
-  @ApiProperty({
-    example: 'Турция',
-    description:
-      'Регион/страна (на русском) — например: Турция, Египет, Азия, ОАЭ, Индийский океан',
-    maxLength: 200,
-  })
-  @IsString()
-  @MaxLength(200)
-  regionRu: string;
-
   @ApiPropertyOptional({
     example:
       'Живописный курортный город на побережье Средиземного моря с роскошными отелями и чистыми пляжами.',
@@ -76,34 +57,57 @@ export class CreateTourDto {
     minimum: 0,
   })
   @Type(() => Number)
-  @IsNumber()
+  @IsNumber({maxDecimalPlaces: 2})
   @Min(0)
   price: number;
 
   @ApiPropertyOptional({
-    example: 'USD',
-    description: 'Valyuta kodi',
-    default: 'USD',
+    example: 4.9,
+    description: 'Baholash',
+    default: 5, minimum: 0,
+    maximum: 5
   })
   @IsOptional()
-  @IsString()
-  @MaxLength(10)
-  currency?: string;
+  @Type(() => Number)
+  @IsNumber({maxDecimalPlaces: 1})
+  @Min(0)
+  @Max(5)
+  rating?: number;
 
   @ApiPropertyOptional({
-    example: 'https://your-zone.b-cdn.net/tours/antalya.jpg',
-    description: 'Tour rasmi URL (Bunny.net CDN dan)',
+    example: ['Aviachipta', 'Mehmonxona', 'Transfer', 'Nonushta'],
+    description: "Tour tarkibidagi qisqa ma'lumotlar",
+    type: [String],
   })
   @IsOptional()
-  @IsUrl()
-  imageUrl?: string;
+  @IsArray()
+  @ArrayMaxSize(30)
+  @IsString({each: true})
+  @MaxLength(300, {each: true})
+  info?: string[];
 
+  @ApiPropertyOptional({
+    example: [
+      'https://your-zone.b-cdn.net/tours/antalya.jpg',
+      'https://your-zone.b-cdn.net/tours/antalya2.jpg'
+    ],
+    description: 'Tour rasmlari URL ro`yxati',
+    type: [String]
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({each: true})
+  @MaxLength(1000, {each: true})
+  imageUrls?: string[];
+ 
   @ApiPropertyOptional({
     example: true,
-    description: "Tour faol holati — false bo'lsa foydalanuvchilarga ko'rinmaydi",
-    default: true,
+    description: 'Tour faol yoki nofaol',
+    default: true
   })
   @IsOptional()
-  @IsBoolean()
+  @Type(() => Boolean)
   isActive?: boolean;
+  
 }

@@ -14,7 +14,7 @@ export interface UploadJobData {
 export class UploadProcessor extends WorkerHost {
   private readonly logger = new Logger(UploadProcessor.name);
 
-  constructor(private configService: ConfigService) {
+  constructor(private readonly configService: ConfigService) {
     super();
   }
 
@@ -26,8 +26,6 @@ export class UploadProcessor extends WorkerHost {
     const storageZone = this.configService.get<string>('BUNNY_STORAGE_ZONE_NAME');
     const apiKey = this.configService.get<string>('BUNNY_STORAGE_API_KEY');
     const cdnHostname = this.configService.get<string>('BUNNY_CDN_HOSTNAME');
-    // Backward-compatible: historically this env was treated like a hostname.
-    // Prefer BUNNY_STORAGE_HOST (full hostname) when present.
     const storageHostOrRegion =
       this.configService.get<string>('BUNNY_STORAGE_HOST') ??
       this.configService.get<string>('BUNNY_STORAGE_REGION', 'storage.bunnycdn.com');
@@ -37,6 +35,7 @@ export class UploadProcessor extends WorkerHost {
       if (!storageZone) missing.push('BUNNY_STORAGE_ZONE_NAME');
       if (!apiKey) missing.push('BUNNY_STORAGE_API_KEY');
       if (!cdnHostname) missing.push('BUNNY_CDN_HOSTNAME');
+
       throw new Error(`Missing Bunny config: ${missing.join(', ')}`);
     }
 
@@ -60,18 +59,22 @@ export class UploadProcessor extends WorkerHost {
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
         const responseData = err.response?.data;
+
         this.logger.error(
           `Bunny upload failed (status=${status}) zone=${storageZone} host=${storageHost} path=${filename}`,
         );
+
         if (responseData) {
           this.logger.error(`Bunny response: ${JSON.stringify(responseData)}`);
         }
       }
+
       throw err;
     }
 
     const cdnUrl = `https://${cdnHostname}/${filename}`;
     this.logger.log(`Upload complete: ${cdnUrl}`);
+
     return { url: cdnUrl };
   }
 }

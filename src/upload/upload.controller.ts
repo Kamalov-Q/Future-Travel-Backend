@@ -3,9 +3,10 @@ import {
   Post,
   UseInterceptors,
   UploadedFile,
+  UploadedFiles,
   UseGuards,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import {
   ApiTags,
   ApiOperation,
@@ -27,13 +28,13 @@ export class UploadController {
 
   @Post('image')
   @ApiOperation({
-    summary: '[ADMIN] Upload tour image to Bunny.net CDN',
+    summary: '[ADMIN] Upload single tour image to Bunny.net CDN',
     description:
-      'Uploads an image file to Bunny.net CDN via BullMQ queue. Returns the CDN URL to use as imageUrl in tour creation. Max file size: 10MB. Allowed types: JPEG, PNG, WebP, GIF.',
+      'Uploads one image file to Bunny.net CDN via BullMQ queue. Max file size: 10MB. Allowed types: JPEG, PNG, WebP, GIF.',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
-    description: 'Tour image file',
+    description: 'Single image file',
     schema: {
       type: 'object',
       required: ['file'],
@@ -66,5 +67,63 @@ export class UploadController {
   )
   uploadImage(@UploadedFile() file: Express.Multer.File) {
     return this.uploadService.uploadImage(file);
+  }
+
+  @Post('images')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: '[ADMIN] Upload multiple tour images to Bunny.net CDN',
+    description:
+      'Uploads multiple image files to Bunny.net CDN via BullMQ queue. Max 10 files. Max size: 10MB per file. Allowed types: JPEG, PNG, WebP, GIF.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Multiple image files',
+    schema: {
+      type: 'object',
+      required: ['files'],
+      properties: {
+        files: {
+          type: 'array',
+          items: {
+            type: 'string',
+            format: 'binary',
+          },
+          description: 'Image files (JPEG, PNG, WebP, GIF — max 10 files, 10MB each)',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Images uploaded successfully',
+    schema: {
+      example: {
+        items: [
+          {
+            url: 'https://your-zone.b-cdn.net/tours/11111111-1111-1111-1111-111111111111.jpg',
+            jobId: '101',
+          },
+          {
+            url: 'https://your-zone.b-cdn.net/tours/22222222-2222-2222-2222-222222222222.png',
+            jobId: '102',
+          },
+        ],
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid file type, size, or count' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @UseInterceptors(
+    FilesInterceptor('files', 10, {
+      storage: memoryStorage(),
+      limits: {
+        files: 10,
+        fileSize: 10 * 1024 * 1024,
+      },
+    }),
+  )
+  uploadImages(@UploadedFiles() files: Express.Multer.File[]) {
+    return this.uploadService.uploadImages(files);
   }
 }

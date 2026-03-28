@@ -6,11 +6,9 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
 import { TourModule } from './tour/tour.module';
-import { CommentModule } from './comment/comment.module';
 import { UploadModule } from './upload/upload.module';
 import { Admin } from './admin/entities/admin.entity';
 import { Tour } from './tour/entities/tour.entity';
-import { Comment } from './comment/entities/comment.entity';
 
 @Module({
   imports: [
@@ -39,7 +37,7 @@ import { Comment } from './comment/entities/comment.entity';
         username: configService.get<string>('DB_USERNAME', 'postgres'),
         password: configService.get<string>('DB_PASSWORD', 'postgres'),
         database: configService.get<string>('DB_NAME', 'future_travel'),
-        entities: [Admin, Tour, Comment],
+        entities: [Admin, Tour],
         synchronize: true,
         logging: false,
       }),
@@ -61,7 +59,6 @@ import { Comment } from './comment/entities/comment.entity';
     AuthModule,
     AdminModule,
     TourModule,
-    CommentModule,
     UploadModule,
   ],
 })

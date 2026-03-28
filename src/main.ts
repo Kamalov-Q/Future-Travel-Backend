@@ -69,7 +69,7 @@ Admin endpointlari uchun **JWT Bearer token** talab qilinadi:
     )
     .addTag('Auth', 'Authentication — admin login, token management')
     .addTag('Admin', 'Admin account management')
-    .addTag('Tours', 'Tour CRUD — public (GET) and admin (POST/PUT/DELETE)')
+    .addTag('Tours', 'Tour CRUD — public (GET) and admin (POST/PATCH/DELETE)')
     .addTag('Comments', 'Comment management — submit (public) and moderate (admin)')
     .addTag('Upload', 'Image upload to Bunny.net CDN via BullMQ')
     .build();
