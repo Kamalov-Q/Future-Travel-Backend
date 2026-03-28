@@ -20,6 +20,9 @@ export class Admin {
   @Column({ length: 100, default: 'Admin' })
   name: string;
 
+  @Column({ type: "text", nullable: true })
+  hashedRefreshToken?: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

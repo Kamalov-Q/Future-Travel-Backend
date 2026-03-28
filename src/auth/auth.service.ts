@@ -28,17 +28,96 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const payload = { sub: admin.id, email: admin.email, name: admin.name };
-    const accessToken = this.jwtService.sign(payload);
+    const tokens = await this.generateTokens(admin);
+    await this.updateRefreshToken(admin.id, tokens.refreshToken);
 
     return {
-      accessToken,
-      tokenType: 'Bearer',
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      tokenType: `Bearer`,
       admin: {
         id: admin.id,
         email: admin.email,
-        name: admin.name,
-      },
+        name: admin.name
+      }
     };
   }
+
+  async refreshTokens(refreshToken: string) {
+    let payload: any;
+
+    try {
+      payload = this.jwtService.verify(refreshToken, {
+        secret: process.env.JWT_REFRESH_SECRET,
+      });
+    } catch (error) {
+      throw new UnauthorizedException(`Invalid or expired refresh token: ${error}`);
+    }
+
+    const admin = await this.adminRepository.findOne({
+      where: {id: payload.sub}
+    });
+
+    if(!admin || !admin.hashedRefreshToken) {
+      throw new UnauthorizedException('Access denied');
+    }
+
+    const isRefreshTokenValid = await bcrypt.compare(refreshToken, admin.hashedRefreshToken);
+
+    if (!isRefreshTokenValid) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const tokens = await this.generateTokens(admin);
+    await this.updateRefreshToken(admin.id, tokens.refreshToken);
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      tokenType: 'Bearer',
+    }
+
+  }
+
+  async logout(adminId: string) {
+    await this.adminRepository.update(adminId, {
+      hashedRefreshToken: null
+    })
+  }
+
+  private async generateTokens(admin: Admin) {
+    const payload = {
+      sub: admin.id,
+      email: admin.email,
+      name: admin.name,
+    };
+
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(payload, {
+        secret: process.env.JWT_SECRET,
+        expiresIn: '15min',
+      }),
+      this.jwtService.signAsync(payload, {
+        secret: process.env.JWT_REFRESH_SECRET,
+        expiresIn: '7d',
+      }),
+    ]);
+
+    return {
+      accessToken, 
+      refreshToken
+    };
+
+  }
+
+  private async updateRefreshToken(adminId: string, refreshToken: string) {
+
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+
+    await this.adminRepository.update(adminId, {
+      hashedRefreshToken,
+    });
+  }
+
+
 }
