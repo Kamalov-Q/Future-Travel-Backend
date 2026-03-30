@@ -8,8 +8,10 @@ import {
   IsArray,
   ArrayMaxSize,
   Max,
+  ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { TourInfoItemDto } from './tour-info-item.dto';
 
 export class CreateTourDto {
   // ─── O'zbek tili ─────────────────────────────────────────────────────────────
@@ -75,16 +77,21 @@ export class CreateTourDto {
   rating?: number;
 
   @ApiPropertyOptional({
-    example: ['Aviachipta', 'Mehmonxona', 'Transfer', 'Nonushta'],
-    description: "Tour tarkibidagi qisqa ma'lumotlar",
-    type: [String],
+    description: "Tour tarkibidagi qisqa ma'lumotlar (UZ/RU)",
+    type: [TourInfoItemDto],
+    example: [
+      { uz: 'Aviachipta', ru: 'Авиабилет' },
+      { uz: 'Mehmonxona', ru: 'Отель' },
+      { uz: 'Transfer', ru: 'Трансфер' },
+      { uz: 'Nonushta', ru: 'Завтрак' },
+    ],
   })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(30)
-  @IsString({each: true})
-  @MaxLength(300, {each: true})
-  info?: string[];
+  @ValidateNested({each: true})
+  @Type(() => TourInfoItemDto)
+  info?: TourInfoItemDto[];
 
   @ApiPropertyOptional({
     example: [

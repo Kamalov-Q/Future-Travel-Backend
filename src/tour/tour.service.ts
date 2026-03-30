@@ -46,12 +46,12 @@ export class TourService {
         const totalPages = totalItems > 0 ? Math.ceil(totalItems / safeLimit) : 1;
 
         return {
-            items, 
+            items,
             meta: {
-                totalItems, 
+                totalItems,
                 totalPages,
                 itemCount: items.length,
-                itemsPerPage: safeLimit, 
+                itemsPerPage: safeLimit,
                 currentPage: page,
                 hasNextPage: page < totalPages,
                 hasPreviousPage: page > 1
@@ -94,7 +94,7 @@ export class TourService {
 
     async findOne(id: string): Promise<Tour> {
         const tour = await this.tourRepository.findOne({
-            where: {id},
+            where: { id },
         });
 
         if (!tour) {
@@ -106,22 +106,25 @@ export class TourService {
 
     async update(id: string, dto: UpdateTourDto): Promise<Tour> {
         const tour = await this.tourRepository.findOne({
-            where: {id},
+            where: { id },
         });
 
         if (!tour) {
             throw new NotFoundException(`Tour with id ${id} not found`);
         }
 
-        Object.assign(tour, dto);
+        Object.assign(tour, {
+            ...dto,
+            ...(dto.info !== undefined ? { info: dto.info } : {}),
+            ...(dto.imageUrls !== undefined ? { imageUrls: dto.imageUrls } : {}),
+        });
 
         return this.tourRepository.save(tour);
-
     }
 
-    async remove(id: string): Promise<{message: string}> {
+    async remove(id: string): Promise<{ message: string }> {
         const tour = await this.tourRepository.findOne({
-            where: {id},
+            where: { id },
         });
 
         if (!tour) {

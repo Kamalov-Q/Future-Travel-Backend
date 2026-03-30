@@ -7,6 +7,11 @@ import {
   Index,
 } from 'typeorm';
 
+export interface TourInfoItem {
+  uz: string;
+  ru: string;
+}
+
 @Entity('tours')
 export class Tour {
   @PrimaryGeneratedColumn('uuid')
@@ -34,8 +39,12 @@ export class Tour {
   @Column({ type: 'float', default: 5 })
   rating: number;
 
-  @Column({ type: 'simple-array', nullable: true })
-  info: string[];
+  @Column({
+    type: "jsonb",
+    nullable: false,
+    default: () => "'[]'",
+  })
+  info: TourInfoItem[];
 
   @Column({ type: 'simple-array', nullable: true })
   imageUrls: string[];
